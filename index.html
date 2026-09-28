@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CRM</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+:root{--bg:#081229;--side:#050d1f;--card:#152544;--inp:#213355;--acc:#38bdf8;--line:#2e4266;--mut:#94a3b8}
+html,body{background:var(--bg);color:#fff;min-height:100%}body{padding-bottom:env(safe-area-inset-bottom,0)}
+.hide{display:none!important}
+input,select,textarea{width:100%;padding:12px;margin:4px 0 10px;background:var(--inp);border:1px solid transparent;border-radius:8px;color:#fff;font-size:15px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}textarea{height:80px;resize:vertical}
+label{font-size:13px;color:var(--mut)}
+button{padding:10px 14px;border:none;border-radius:8px;background:var(--acc);color:#04121f;font-weight:600;cursor:pointer;font-size:14px}
+button:active{transform:scale(.97)}
+.red{background:#ef4444;color:#fff}.grn{background:#22c55e;color:#fff}.gry{background:#334155;color:#fff}
+/* login */
+#login{display:flex;min-height:100vh}
+.art{flex:1.3;background:radial-gradient(circle at 30% 20%,#12336b,#050d1f);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:30px;text-align:center}
+.wheel{position:relative;width:min(460px,88%);aspect-ratio:1;margin-bottom:8px}
+.wheel svg{position:absolute;inset:0;width:100%;height:100%}
+.wtrack{stroke:#1e3a6b;stroke-width:3;fill:none}
+.wdot{fill:#f59e0b;filter:drop-shadow(0 0 6px #f59e0b)}
+.wcenter{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34%;aspect-ratio:1;border-radius:50%;background:#0b1c3d;border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;text-align:center;padding:6%}
+.wcenter b{color:#38bdf8;font-size:clamp(13px,2.2vw,18px);line-height:1.25}
+.wnode{position:absolute;width:30%;text-align:center;transform:translate(-50%,-50%)}
+.wnode .dot{width:14px;height:14px;border-radius:50%;margin:0 auto 6px;box-shadow:0 0 10px currentColor}
+.wnode b{display:block;color:#e2e8f0;font-size:clamp(11px,1.6vw,14px)}
+.wnode span{display:block;color:#93a5c4;font-size:clamp(9px,1.3vw,11.5px);margin-top:2px;line-height:1.3}
+.wnode.active .dot{animation:pu 1.6s ease-in-out infinite}
+@keyframes pu{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+#thought{font-size:18px;color:#bae6fd;min-height:56px;max-width:420px;transition:opacity .5s;margin-top:10px}
+.lw{flex:1;display:flex;justify-content:center;align-items:center;padding:20px}
+.box{background:var(--card);padding:30px;width:390px;max-width:94vw;border-radius:14px}
+.box h1{color:var(--acc);text-align:center;margin-bottom:6px;font-size:22px}.sub{text-align:center;color:var(--mut);font-size:13px;margin-bottom:18px}
+@media(max-width:800px){.art{display:none}}
+/* app */
+#app{display:flex;min-height:100vh}
+.side{width:220px;background:var(--side);padding:18px;flex-shrink:0;transition:margin .2s}
+.logo{font-size:22px;font-weight:700;color:var(--acc);margin-bottom:20px;word-break:break-word}
+.side a{display:block;padding:12px;margin-bottom:7px;border-radius:8px;background:#101d38;cursor:pointer;font-size:14px}.side a:hover,.side a.on{background:#2563eb}
+.main{flex:1;padding:16px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.hb{display:none;background:var(--card);border:1px solid var(--line);width:42px;height:42px;font-size:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.c{background:var(--card);padding:14px;border-radius:12px}.c h3{font-size:12px;color:var(--mut);font-weight:500}.c h2{color:var(--acc);font-size:24px;margin-top:4px}
+.sec{background:var(--card);padding:14px;border-radius:12px;margin-bottom:14px}.sec h2{margin-bottom:10px;font-size:16px}
+.tw{overflow-x:auto;border-radius:10px;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;white-space:nowrap}th{background:var(--acc);color:#04121f;text-transform:uppercase;font-size:11px}
+td.wrap{white-space:normal;min-width:180px;max-width:240px}
+.act{position:sticky;right:0;background:#0f1d3a;box-shadow:-6px 0 8px rgba(0,0,0,.35);z-index:2}th.act{background:var(--acc)}
+.act button{padding:8px 10px;margin-right:3px;font-size:15px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}.row input,.row select{width:auto;margin:0;flex:1;min-width:130px}
+.bar{height:9px;border-radius:5px;background:var(--inp);margin:4px 0 12px}.bar i{display:block;height:100%;border-radius:5px;background:var(--acc)}
+.prog{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.p-pending{background:#7f1d1d;color:#fecaca}.p-working{background:#78350f;color:#fde68a}.p-done{background:#14532d;color:#bbf7d0}
+.pill{background:var(--inp);color:#fff;border-radius:99px;padding:7px 13px;font-weight:500;font-size:13px}.pill.on{background:var(--acc);color:#04121f}
+.idea{display:flex;gap:12px;background:var(--inp);padding:14px;border-radius:10px;margin-bottom:10px;flex-wrap:wrap}
+.vote{min-width:54px;text-align:center;background:var(--card);border-radius:8px;padding:8px;cursor:pointer;font-weight:700}.vote.on{background:var(--acc);color:#04121f}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:24px 12px;z-index:9}#modal .box{width:760px}
+#toast{position:fixed;bottom:20px;right:20px;left:20px;max-width:340px;margin:0 auto;background:#0f172a;border:1px solid var(--acc);padding:12px 18px;border-radius:8px;z-index:99;text-align:center}
+.editicon{cursor:pointer;color:var(--mut);font-size:13px;margin-left:6px}
+@media(max-width:800px){
+ .hb{display:block}
+ .side{position:fixed;left:0;top:0;bottom:0;z-index:20;margin-left:-260px;box-shadow:8px 0 20px rgba(0,0,0,.5)}
+ .side.open{margin-left:0}
+ .top h1{font-size:19px}
+ .box{padding:22px}
+}
+</style></head><body>
+
+<div id="login">
+ <div class="art">
+  <div class="wheel" id="wheel">
+   <svg viewBox="0 0 100 100"><circle class="wtrack" cx="50" cy="50" r="44"/><circle id="wdot" class="wdot" cx="50" cy="6" r="2.6"/></svg>
+   <div class="wcenter"><b>R&amp;D · Technology<br>&amp; Service Cycle</b></div>
+  </div>
+  <div id="thought"></div>
+ </div>
+ <div class="lw"><div class="box"><h1 id="ln">CRM</h1><div class="sub">Operations · Technology · Service</div>
+  <input id="em" type="email" placeholder="Email" autocomplete="username"><input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <button style="width:100%" id="lb">Login</button><p id="err" style="color:#f87171;font-size:13px;margin-top:10px;text-align:center"></p></div></div>
+</div>
+
+<div id="app" class="hide">
+ <div id="ov" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:19"></div>
+ <div class="side" id="side"><div class="logo" id="sn">CRM</div>
+ <a data-v="dash">Dashboard</a><a data-v="proj">Projects</a><a data-v="idea">Voting / Backlog</a><a data-v="log">Activity Log</a><a data-v="rep">Reports</a>
+ <a data-v="usr" class="adm">Users</a><a data-v="set" class="adm">Settings</a><a id="lo" style="background:#7f1d1d">Logout</a></div>
+ <div class="main"><div class="top"><button class="hb" id="hb">☰</button><h1 id="ttl"></h1><div style="text-align:right"><b id="who"></b><br><small id="dt" style="color:var(--mut)"></small></div></div><div id="view"></div></div>
+</div>
+<div id="modal" class="hide"></div>
+
+<script type="module">
+import {initializeApp,deleteApp} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged,createUserWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import {getFirestore,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,query,where,orderBy,limit,startAfter,getCountFromServer,writeBatch,arrayUnion,arrayRemove,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+const FC={apiKey:"AIzaSyBO9AuqcNS8K3JPzYs2iT7ER9epGr3my2o",authDomain:"mom-crm-f1fe9.firebaseapp.com",projectId:"mom-crm-f1fe9",storageBucket:"mom-crm-f1fe9.firebasestorage.app",messagingSenderId:"534808422715",appId:"1:534808422715:web:d94c671961498542c56f1e"};
+const app=initializeApp(FC),auth=getAuth(app),db=getFirestore(app);
+const PAGE=50,REFRESH_MS=5*60*60*1000;
+const F=[["name","text"],["business","sel"],["assetType","sel"],["assetModel","sel"],["owner","text"],["spoc","text"],["task","text"],["priority","sel"],["start","date"],["end","date"],["status","sel"],["remarks","area"]];
+const PROG=[["pending","Pending","p-pending"],["working","In Progress","p-working"],["done","Completed","p-done"]];
+const BIZ=["LTO 100Ah","BAAS","VAAS","FO/COCO","Other"];
+const AT=["Battery","Charger","BSS (V1/V2)","Other"];
+const AM_BATTERY=["Battery 45 AH - Inverted","Battery 45 AH - Livguard","Battery 45 AH - Trontek","Battery 100 AH - Livguard","Battery 100 AH - Trontek","Other"];
+const AM_CHARGER=["Charger 20A/55V Livguard","Charger 25A/55V Trontek","Charger 25A Vecomocon","Other"];
+const AM_BSS=["Software Issue","Hardware Issue","Other"];
+const DEF={name:"OTSR CRM",labels:{name:"Project Name",business:"Type Of Business",assetType:"Type Of Asset",assetModel:"Asset Model",owner:"Project Owner",spoc:"Project SPOC",task:"Running Task",priority:"Priority",start:"Start Date",end:"End Date",status:"Status",remarks:"Remarks"},
+ opts:{business:BIZ,priority:["Low","Medium","High","Critical"],status:["Pending","In Progress","Completed","Hold"]},
+ dep:{assetType:Object.fromEntries(BIZ.map(b=>[b,AT])),assetModel:{"Battery":AM_BATTERY,"Charger":AM_CHARGER,"BSS (V1/V2)":AM_BSS,"Other":["Other"]}},
+ idea:{status:["Idea Generation","Feasibility Analysis","Prototype Development","Testing","Commercialization","Declined"],cat:["Hardware","Firmware","Software","Documentation","Other"]}};
+let me=null,cfg=DEF,first=[],more=[],cursor=null,hasMore=false,ideas=[],users=[],logs=[],counts={},view="dash",filt={q:"",s:""},iq={q:"",s:"",c:"",sort:"top"};
+let actShow=5,logShow=5,lastLoad=0,refT=null;
+const $=s=>document.querySelector(s),isAdmin=()=>me?.role==="admin";
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const toast=m=>{const t=document.createElement("div");t.id="toast";t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2800)};
+const nid=()=>String(9e12-Date.now()).padStart(13,"0")+Math.random().toString(36).slice(2,8);
+const lines=t=>t.split("\n").map(x=>x.trim()).filter(Boolean);
+const tm=t=>t?.toDate?t.toDate().toLocaleString():(t instanceof Date?t.toLocaleString():"…");
+const norm=d=>({...d,name:d.name??d.projectName??"",business:d.business??d.businessType??"",progress:d.progress||"pending"});
+const mapDoc=d=>({id:d.id,...norm(d.data())});
+async function log(action,detail,targetUid){if(!me)return;const e={uid:me.uid,name:me.name,role:me.role,action,detail:String(detail||"").slice(0,300),targetUid:targetUid||me.uid,ts:new Date()};logs.unshift(e);render();try{await setDoc(doc(db,"logs",nid()),{...e,ts:serverTimestamp()})}catch(_){}}
+setInterval(()=>{const d=$("#dt");if(d)d.textContent=new Date().toLocaleString()},1000);
+
+// ---- login art: R&D / Tech / Service life-cycle wheel
+const STAGES=[
+ {t:"Field Issue Logged",d:"Asset fault reported from site",c:"#f59e0b"},
+ {t:"Diagnosis",d:"Technical root-cause analysis",c:"#38bdf8"},
+ {t:"Fix / R&D",d:"Repair, patch or redesign built",c:"#22c55e"},
+ {t:"Testing",d:"Solution verified before rollout",c:"#a78bfa"},
+ {t:"Deployed & Closed",d:"Service restored, case closed",c:"#fb7185"}
+];
+const wheel=$("#wheel");
+if(wheel){
+ STAGES.forEach((s,i)=>{
+  const ang=-90+i*(360/STAGES.length),r=44,rad=ang*Math.PI/180;
+  const x=50+r*Math.cos(rad),y=50+r*Math.sin(rad);
+  const n=document.createElement("div");n.className="wnode";n.style.left=x+"%";n.style.top=y+"%";
+  n.innerHTML=`<div class="dot" style="background:${s.c};color:${s.c}"></div><b>${s.t}</b><span>${s.d}</span>`;
+  wheel.appendChild(n);
+ });
+ const nodes=[...wheel.querySelectorAll(".wnode")],dot=$("#wdot");
+ let si=0;
+ function stepWheel(){
+  nodes.forEach((n,i)=>n.classList.toggle("active",i===si));
+  const ang=-90+si*(360/STAGES.length),rad=ang*Math.PI/180;
+  dot.setAttribute("cx",50+44*Math.cos(rad));dot.setAttribute("cy",50+44*Math.sin(rad));dot.style.fill=STAGES[si].c;
+  const th=$("#thought");if(th){th.style.opacity=0;setTimeout(()=>{th.textContent=STAGES[si].t+" — "+STAGES[si].d;th.style.opacity=1},350)}
+  si=(si+1)%STAGES.length;
+ }
+ stepWheel();setInterval(stepWheel,2400);
+}
+
+// ---- hamburger (mobile)
+$("#hb").onclick=()=>{$("#side").classList.add("open");$("#ov").classList.remove("hide")};
+$("#ov").onclick=()=>{$("#side").classList.remove("open");$("#ov").classList.add("hide")};
+
+const applyName=()=>{$("#ln").textContent=cfg.name;$("#sn").textContent=cfg.name;$("#ttl").textContent=cfg.name;document.title=cfg.name};
+
+// ---- auth
+$("#lb").onclick=async()=>{$("#err").textContent="";try{await signInWithEmailAndPassword(auth,$("#em").value.trim(),$("#pw").value)}catch(e){$("#err").textContent="Invalid email or password"}};
+$("#pw").onkeydown=e=>{if(e.key==="Enter")$("#lb").click()};
+$("#lo").onclick=async()=>{await log("Logout");clearInterval(refT);signOut(auth)};
+onAuthStateChanged(auth,async u=>{
+ me=null;first=[];more=[];ideas=[];users=[];logs=[];clearInterval(refT);
+ if(!u){$("#app").classList.add("hide");$("#login").classList.remove("hide");return}
+ const p=await getDoc(doc(db,"users",u.uid)).catch(()=>null);
+ if(!p||!p.exists()||p.data().disabled){await signOut(auth);$("#err").textContent="Access denied. Contact admin.";return}
+ me={uid:u.uid,...p.data()};
+ $("#login").classList.add("hide");$("#app").classList.remove("hide");$("#pw").value="";$("#who").textContent=`${me.name} (${me.role})`;
+ document.querySelectorAll(".adm").forEach(a=>a.classList.toggle("hide",!isAdmin()));
+ await loadAll();log("Login");nav("dash");
+ refT=setInterval(loadAll,REFRESH_MS);
+});
+document.querySelectorAll(".side a[data-v]").forEach(a=>a.onclick=()=>{nav(a.dataset.v);$("#side").classList.remove("open");$("#ov").classList.add("hide")});
+function nav(v){if((v==="usr"||v==="set")&&!isAdmin())return;view=v;actShow=5;logShow=5;document.querySelectorAll(".side a[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===v));render()}
+
+// ---- one-time load (low read cost, cache 5h, manual refresh)
+async function loadAll(showToast){
+ if(!me)return;
+ try{
+  const cfgSnap=await getDoc(doc(db,"config","app"));
+  if(cfgSnap.exists()){const d=cfgSnap.data();cfg={...DEF,...d,labels:{...DEF.labels,...d.labels},opts:{...DEF.opts,...d.opts},dep:d.dep||DEF.dep,idea:{...DEF.idea,...(d.idea||{})}}}
+  applyName();
+  const pq0=isAdmin()?query(collection(db,"projects"),limit(PAGE)):query(collection(db,"projects"),where("createdBy","==",me.uid),limit(PAGE));
+  const ps=await getDocs(pq0);first=ps.docs.map(mapDoc);cursor=ps.docs[ps.docs.length-1];hasMore=ps.docs.length===PAGE;more=[];
+  const is=await getDocs(query(collection(db,"ideas"),limit(300)));ideas=is.docs.map(d=>({id:d.id,...d.data()}));
+  const lq=isAdmin()?query(collection(db,"logs"),limit(200)):query(collection(db,"logs"),where("uid","==",me.uid),limit(200));
+  const tq=!isAdmin()?query(collection(db,"logs"),where("targetUid","==",me.uid),limit(200)):null;
+  const ls=await getDocs(lq);let lmap=new Map(ls.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
+  if(tq){const ts=await getDocs(tq);ts.docs.forEach(d=>lmap.set(d.id,{id:d.id,...d.data()}))}
+  logs=[...lmap.values()].sort((a,b)=>(b.ts?.seconds||0)-(a.ts?.seconds||0));
+  if(isAdmin()){const us=await getDocs(collection(db,"users"));users=us.docs.map(d=>({id:d.id,...d.data()}))}
+  await loadCounts();
+  lastLoad=Date.now();render();
+  if(showToast)toast("Data refreshed");
+ }catch(e){toast("Load error: "+e.code)}
+}
+async function loadCounts(){if(!me)return;const base=isAdmin()?[]:[where("createdBy","==",me.uid)];
+ const n=async c=>(await getCountFromServer(query(collection(db,"projects"),...base,...c))).data().count,c={};
+ try{c.total=await n([]);for(const s of cfg.opts.status)c[s]=await n([where("status","==",s)]);for(const [pk] of PROG)c["pg:"+pk]=await n([where("progress","==",pk)]);counts=c;render()}catch(e){}}
+async function loadMore(){const base=isAdmin()?[]:[where("createdBy","==",me.uid)];
+ const s=await getDocs(query(collection(db,"projects"),...base,startAfter(cursor),limit(PAGE)));more.push(...s.docs.map(mapDoc));cursor=s.docs[s.docs.length-1]||cursor;hasMore=s.docs.length===PAGE;render()}
+const all=()=>{const ids=new Set(first.map(p=>p.id));return[...first,...more.filter(p=>!ids.has(p.id))]};
+
+// ---- views
+function actTable(l){return `<div class="tw"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody>${l.map(x=>`<tr><td>${tm(x.ts)}</td><td>${esc(x.name)} <small style="color:var(--mut)">${esc(x.role)}</small></td><td>${esc(x.action)}</td><td class="wrap">${esc(x.detail)}</td></tr>`).join("")||"<tr><td colspan=4>No activity</td></tr>"}</tbody></table></div>`}
+const bars=(items,tot)=>items.map(([l,v])=>`<div>${esc(l)} — ${v??"…"}</div><div class="bar"><i style="width:${tot&&v?v/tot*100:0}%"></i></div>`).join("");
+function dash(){const c=counts;const l=logs.slice(0,actShow);
+ return `<div class="row"><button data-a="ref">↻ Refresh Data</button><small style="color:var(--mut);align-self:center">Last updated: ${lastLoad?new Date(lastLoad).toLocaleTimeString():"…"} (auto every 5 hrs)</small></div>
+ <div class="cards"><div class="c"><h3>Total Projects</h3><h2>${c.total??"…"}</h2></div>${cfg.opts.status.map(s=>`<div class="c"><h3>${esc(s)}</h3><h2>${c[s]??"…"}</h2></div>`).join("")}<div class="c"><h3>Backlog Ideas</h3><h2>${ideas.length}</h2></div>${isAdmin()?`<div class="c"><h3>Users</h3><h2>${users.length}</h2></div>`:""}</div>
+ <div class="sec"><h2>By ${esc(cfg.labels.status)}</h2>${bars(cfg.opts.status.map(s=>[s,c[s]]),c.total)}</div>
+ <div class="sec"><h2>By Progress (work stage set by admin)</h2>${bars(PROG.map(([pk,label])=>[label,c["pg:"+pk]]),c.total)}</div>
+ <div class="sec"><h2>Recent Activity</h2>${actTable(l)}${logs.length>actShow?`<div class="row" style="margin-top:10px"><button class="gry" data-a="more5">Show 5 more</button><button class="gry" data-a="more10">Show 10 more</button></div>`:""}</div>`}
+
+function progBadge(p){const [k,label,cls]=PROG.find(x=>x[0]===p.progress)||PROG[0];
+ return `<span class="prog ${cls}">● ${esc(label)}</span>`}
+function projView(){const q=filt.q.toLowerCase(),l=all().filter(p=>!q||JSON.stringify(p).toLowerCase().includes(q));
+ const cols=["name","business","assetType","owner","assetModel","task","spoc","priority","start","end","status"];
+ return `<div class="sec"><div class="row"><button data-a="new">+ New Project</button><input id="fq" placeholder="Search loaded rows..." value="${esc(filt.q)}">
+ <select id="fs"><option value="" ${filt.s?"":"selected"}>All ${esc(cfg.labels.status)}</option>${cfg.opts.status.map(s=>`<option ${filt.s===s?"selected":""}>${esc(s)}</option>`).join("")}</select></div>
+ <p style="color:var(--mut);font-size:13px;margin-bottom:10px">Showing ${l.length} project(s) ${filt.s?"(filtered)":""}. Use "Load More" for older records.</p>
+ <div class="tw"><table><thead><tr><th>SR</th>${cols.map(c=>`<th>${esc(cfg.labels[c])}</th>`).join("")}<th>Progress</th><th class="act">Actions</th></tr></thead><tbody>
+ ${l.filter(p=>!filt.s||p.status===filt.s).map((p,i)=>`<tr><td>${i+1}</td>${cols.map(c=>`<td class="${c==="task"?"wrap":""}">${c==="name"?`<b>${esc(p[c])}</b>`:c==="status"?`<span class="prog" style="background:var(--inp)">${esc(p[c])}</span>`:esc(p[c])}</td>`).join("")}
+ <td>${progBadge(p)}</td>
+ <td class="act"><button data-a="ed" data-i="${p.id}" title="Edit">✏️</button>${isAdmin()?`<button class="gry" data-a="cyc" data-i="${p.id}" title="Change progress">👁</button><button class="red" data-a="del" data-i="${p.id}" title="Delete">🗑</button>`:""}</td></tr>`).join("")||"<tr><td colspan=15>No data</td></tr>"}</tbody></table></div>
+ ${hasMore?`<div class="row" style="margin-top:12px"><button data-a="loadmore">Load More</button></div>`:""}
+ <p style="color:var(--mut);font-size:12px;margin-top:8px">Progress colour: <span class="prog p-pending">Pending</span> <span class="prog p-working">In Progress</span> <span class="prog p-done">Completed</span> — ${isAdmin()?"click 👁 to move to the next stage":"admin updates this as work moves forward"}</p></div>`}
+
+function ideaView(){const S=cfg.idea.status,q=iq.q.toLowerCase();
+ let l=ideas.filter(i=>(!iq.s||i.status===iq.s)&&(!iq.c||i.cat===iq.c)&&(!q||(i.title+i.desc).toLowerCase().includes(q)));
+ l.sort(iq.sort==="top"?(a,b)=>(b.voters?.length||0)-(a.voters?.length||0):(a,b)=>(b.createdAt?.seconds||9e9)-(a.createdAt?.seconds||9e9));
+ const pill=(k,v,t)=>`<button class="pill ${iq[k]===v?"on":""}" data-a="if" data-k="${k}" data-v="${esc(v)}">${esc(t)}</button>`;
+ return `<div class="sec"><h2>Public R&D Backlog — anyone proposes, everyone votes, the team builds</h2>
+ <div class="row"><button data-a="ni">+ Submit a Task</button><input id="iq" placeholder="Search tasks..." value="${esc(iq.q)}">${pill("sort","top","Top")}${pill("sort","new","New")}</div>
+ <div class="row">${pill("s","","All "+ideas.length)}${S.map(s=>pill("s",s,s)).join("")}</div><div class="row">${pill("c","","All categories")}${cfg.idea.cat.map(c=>pill("c",c,c)).join("")}</div></div>
+ ${l.map(i=>{const v=i.voters?.includes(me.uid);return `<div class="idea"><div class="vote ${v?"on":""}" data-a="vote" data-i="${i.id}">▲<br>${i.voters?.length||0}</div><div style="flex:1;min-width:180px"><b>${esc(i.title)}</b> <span class="pill">${esc(i.cat)}</span><p style="margin:6px 0;color:#cbd5e1">${esc(i.desc)}</p><small style="color:var(--mut)">by ${esc(i.name)} · ${tm(i.createdAt)}</small></div>
+ <div>${isAdmin()?`<select data-c="is" data-i="${i.id}">${S.map(s=>`<option ${i.status===s?"selected":""}>${esc(s)}</option>`).join("")}</select><button class="red" data-a="di" data-i="${i.id}">Delete</button>`:`<span class="pill">${esc(i.status)}</span>`}</div></div>`}).join("")||"<div class=sec>No tasks yet</div>"}`}
+
+const repView=()=>`<div class="sec"><h2>Reports</h2><p style="color:var(--mut);margin-bottom:12px">Export downloads ${isAdmin()?"all projects":"your projects"} as CSV (opens in Excel).</p><div class="row"><button class="grn" data-a="ex">Export CSV</button></div>
+ ${isAdmin()?`<hr style="border-color:var(--line);margin:14px 0"><p style="color:var(--mut);margin-bottom:8px">Admin only: upload CSV (header = column names) for bulk insert.</p><div class="row"><input type="file" id="im" accept=".csv" style="max-width:260px"><button data-a="imp">Upload & Save</button></div>`:""}</div>`;
+
+const usrView=()=>`<div class="sec"><h2>Create New User</h2><div class="g"><div><label>Full Name</label><input id="un"></div><div><label>Email</label><input id="ue" type="email"></div><div><label>Password (min 6)</label><input id="up" type="password"></div><div><label>Role</label><select id="ur"><option>user</option><option>admin</option></select></div></div><button data-a="cu">Create User</button></div>
+ <div class="sec"><h2>Users</h2><div class="tw"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Access</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.id===me.uid?esc(u.role):`<select data-c="ro" data-i="${u.id}" style="margin:0"><option ${u.role==="user"?"selected":""}>user</option><option ${u.role==="admin"?"selected":""}>admin</option></select>`}</td><td>${u.id===me.uid?"—":`<button class="${u.disabled?"grn":"red"}" data-a="dx" data-i="${u.id}">${u.disabled?"Enable":"Disable"}</button>`}</td></tr>`).join("")}</tbody></table></div></div>`;
+
+function setView(){const ta=(attrs,v)=>`<textarea ${attrs}>${esc((v||[]).join("\n"))}</textarea>`;
+ const ats=[...new Set(Object.values(cfg.dep.assetType).flat())];
+ return `<div class="sec"><h2>CRM Name</h2><div class="row"><input id="s_name" value="${esc(cfg.name)}" style="flex:1"><button data-a="savename">Save Name</button></div></div>
+ <div class="sec"><h2>Column Names</h2><div class="g">${F.map(([k])=>`<div><label>${esc(k)}</label><input data-l="${k}" value="${esc(cfg.labels[k])}"></div>`).join("")}</div></div>
+ <div class="sec"><h2>Dropdown Lists (one option per line)</h2><div class="g">
+ <div><label>${esc(cfg.labels.business)}</label>${ta(`data-o="business"`,cfg.opts.business)}</div>
+ <div><label>${esc(cfg.labels.priority)}</label>${ta(`data-o="priority"`,cfg.opts.priority)}</div>
+ <div><label>${esc(cfg.labels.status)}</label>${ta(`data-o="status"`,cfg.opts.status)}</div>
+ <div><label>Backlog Stages</label>${ta(`data-o="istatus"`,cfg.idea.status)}</div>
+ <div><label>Backlog Categories</label>${ta(`data-o="icat"`,cfg.idea.cat)}</div></div></div>
+ <div class="sec"><h2>${esc(cfg.labels.assetType)} options — per ${esc(cfg.labels.business)}</h2><div class="g">${cfg.opts.business.map(b=>`<div><label>${esc(b)} →</label>${ta(`data-dep="assetType" data-p="${esc(b)}"`,cfg.dep.assetType[b])}</div>`).join("")}</div></div>
+ <div class="sec"><h2>${esc(cfg.labels.assetModel)} options — per ${esc(cfg.labels.assetType)}</h2><div class="g">${ats.map(a=>`<div><label>${esc(a)} →</label>${ta(`data-dep="assetModel" data-p="${esc(a)}"`,cfg.dep.assetModel[a])}</div>`).join("")}</div><small style="color:var(--mut)">New ${esc(cfg.labels.assetType)} names appear here after saving the section above.</small></div>
+ <button data-a="sv">Save All Settings</button>`}
+
+function render(){if(!me)return;const v=$("#view");v.innerHTML=({dash,proj:projView,idea:ideaView,log:()=>{const l=logs.slice(0,logShow);return `<div class="sec"><h2>${isAdmin()?"All Activity":"My Activity"}</h2>${actTable(l)}${logs.length>logShow?`<div class="row" style="margin-top:10px"><button class="gry" data-a="log5">Show 5 more</button><button class="gry" data-a="log10">Show 10 more</button></div>`:""}</div>`},rep:repView,usr:usrView,set:setView})[view]()}
+
+// ---- form popup (cascading dropdowns)
+const optsFor=(k,v)=>k==="assetType"?(cfg.dep.assetType[v.business]||[]):k==="assetModel"?(cfg.dep.assetModel[v.assetType]||[]):(cfg.opts[k]||[]);
+function formModal(p,title,onSave){const m=$("#modal"),v={...(p||{})};if(!p)v.spoc=me.name;
+ m.innerHTML=`<div class="box"><h2 style="margin-bottom:12px">${esc(title)}</h2><div class="g">${F.map(([k,t])=>`<div><label>${esc(cfg.labels[k])}</label>${t==="sel"?`<select id="f_${k}"></select>`:t==="area"?`<textarea id="f_${k}"></textarea>`:`<input id="f_${k}" type="${t}">`}</div>`).join("")}</div><div class="row"><button id="ps">Save</button><button class="gry" id="pc">Cancel</button></div></div>`;
+ m.classList.remove("hide");
+ const get=k=>$("#f_"+k)?$("#f_"+k).value:(v[k]||"");
+ const fill=(k,keep)=>{const s=$("#f_"+k);if(!s||s.tagName!=="SELECT")return;const cv=keep?(v[k]||""):"",l=optsFor(k,{business:get("business"),assetType:get("assetType")}),a=cv&&!l.includes(cv)?[...l,cv]:l;s.innerHTML=(a.length?"":"<option value=''>— none —</option>")+a.map(o=>`<option ${o===cv?"selected":""}>${esc(o)}</option>`).join("")};
+ F.forEach(([k,t])=>{if(t!=="sel"){const e=$("#f_"+k);if(e)e.value=v[k]||""}});
+ ["business","priority","status","assetType","assetModel"].forEach(k=>fill(k,true));
+ $("#f_business").onchange=()=>{fill("assetType",false);fill("assetModel",false)};
+ $("#f_assetType").onchange=()=>fill("assetModel",false);
+ $("#pc").onclick=()=>m.classList.add("hide");
+ $("#ps").onclick=async()=>{const d={};F.forEach(([k])=>d[k]=$("#f_"+k).value.trim());
+  if(!d.name)return toast("Project name required");
+  if(d.start&&d.end&&d.end<d.start)return toast("End date is before start date");
+  try{await onSave(d);m.classList.add("hide");toast("Saved to database")}catch(e){toast("Save failed: "+e.code)}}}
+const find=id=>all().find(p=>p.id===id);
+async function upd(p,d){await updateDoc(doc(db,"projects",p.id),{...d,updatedAt:serverTimestamp(),updatedBy:me.name});Object.assign(p,d)}
+
+// ---- actions
+const H={
+ ref:()=>loadAll(true),
+ loadmore:loadMore,
+ more5:()=>{actShow+=5;render()},more10:()=>{actShow+=10;render()},
+ log5:()=>{logShow+=5;render()},log10:()=>{logShow+=10;render()},
+ new:()=>formModal(null,"New Project",async d=>{const id=nid();const obj={...d,progress:"pending",createdBy:me.uid,createdByName:me.name,createdAt:serverTimestamp()};await setDoc(doc(db,"projects",id),obj);first.unshift({id,...obj,createdAt:new Date()});log("Created project",d.name)}),
+ ed:i=>{const p=find(i);formModal(p,"Edit Project",async d=>{await upd(p,d);log("Edited project",d.name,p.createdBy)})},
+ cyc:async i=>{if(!isAdmin())return;const p=find(i);const idx=PROG.findIndex(x=>x[0]===p.progress);const next=PROG[(idx+1)%PROG.length][0];await updateDoc(doc(db,"projects",i),{progress:next});p.progress=next;render();loadCounts();log("Progress changed",p.name+" → "+next,p.createdBy)},
+ del:async i=>{const p=find(i);if(confirm("Delete this project?"))try{await deleteDoc(doc(db,"projects",i));first=first.filter(x=>x.id!==i);more=more.filter(x=>x.id!==i);render();log("Deleted project",p.name,p.createdBy);toast("Deleted")}catch(e){toast("Not allowed")}},
+ if:(i,b)=>{iq[b.dataset.k]=b.dataset.v;render()},
+ vote:async i=>{const d=ideas.find(x=>x.id===i),on=d.voters?.includes(me.uid);try{await updateDoc(doc(db,"ideas",i),{voters:on?arrayRemove(me.uid):arrayUnion(me.uid)});d.voters=on?d.voters.filter(x=>x!==me.uid):[...(d.voters||[]),me.uid];render();log(on?"Removed vote":"Voted",d.title)}catch(e){toast("Vote failed")}},
+ ni:()=>{const m=$("#modal");m.innerHTML=`<div class="box"><h2 style="margin-bottom:12px">Submit a Task / Improvement</h2><label>Title</label><input id="it"><label>Category</label><select id="ic">${cfg.idea.cat.map(c=>`<option>${esc(c)}</option>`).join("")}</select><label>Description</label><textarea id="id"></textarea><div class="row"><button id="is">Submit</button><button class="gry" id="ix">Cancel</button></div></div>`;m.classList.remove("hide");
+  $("#ix").onclick=()=>m.classList.add("hide");$("#is").onclick=async()=>{const t=$("#it").value.trim();if(!t)return toast("Title required");const id=nid();const obj={title:t.slice(0,150),cat:$("#ic").value,desc:$("#id").value.trim().slice(0,1000),status:cfg.idea.status[0],createdBy:me.uid,name:me.name,voters:[],createdAt:new Date()};
+   await setDoc(doc(db,"ideas",id),{...obj,createdAt:serverTimestamp()});ideas.unshift({id,...obj});render();log("Submitted idea",t);m.classList.add("hide");toast("Submitted")}},
+ di:async i=>{if(confirm("Delete this task?")){await deleteDoc(doc(db,"ideas",i));ideas=ideas.filter(x=>x.id!==i);render();log("Deleted idea",i)}},
+ dx:async i=>{const u=users.find(x=>x.id===i);await updateDoc(doc(db,"users",i),{disabled:!u.disabled});u.disabled=!u.disabled;render();log(u.disabled?"Disabled user":"Enabled user",u.email)},
+ cu:async()=>{const name=$("#un").value.trim(),email=$("#ue").value.trim(),pw=$("#up").value,role=$("#ur").value;if(!name||!email||pw.length<6)return toast("Fill all fields (password min 6)");
+  const s=initializeApp(FC,"sec"+Date.now()),a=getAuth(s);
+  try{const c=await createUserWithEmailAndPassword(a,email,pw);await setDoc(doc(db,"users",c.user.uid),{name,email,role,disabled:false,createdAt:serverTimestamp()});users.push({id:c.user.uid,name,email,role,disabled:false});render();log("Created user",email+" ("+role+")");toast("User created")}catch(e){toast("Error: "+e.code)}
+  await signOut(a).catch(()=>{});await deleteApp(s)},
+ ex:async()=>{toast("Preparing export…");const K=F.map(f=>f[0]),q=v=>`"${String(v??"").replace(/"/g,'""')}"`,out=[K.map(k=>q(cfg.labels[k])).join(",")];let last=null;const base=isAdmin()?[]:[where("createdBy","==",me.uid)];
+  for(;;){const s=await getDocs(query(collection(db,"projects"),...base,...(last?[startAfter(last)]:[]),limit(1000)));s.docs.forEach(d=>{const x=norm(d.data());out.push(K.map(k=>q(x[k])).join(","))});if(s.docs.length<1000)break;last=s.docs[s.docs.length-1]}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+out.join("\n")],{type:"text/csv"}));a.download="report_"+new Date().toISOString().slice(0,10)+".csv";a.click();log("Exported CSV",(out.length-1)+" rows")},
+ imp:async()=>{if(!isAdmin())return;const f=$("#im").files[0];if(!f)return toast("Choose a CSV file");const rows=parseCSV((await f.text()).replace(/^\ufeff/,""));if(rows.length<2)return toast("Empty file");
+  const map=rows[0].map(h=>{h=h.trim().toLowerCase();const x=F.find(([k])=>k.toLowerCase()===h||cfg.labels[k].toLowerCase()===h);return x?x[0]:null});if(!map.includes("name"))return toast("Project Name column not found");
+  let b=writeBatch(db),n=0;for(const r of rows.slice(1)){const d={};map.forEach((k,i)=>{if(k)d[k]=(r[i]||"").trim().slice(0,500)});if(!d.name)continue;b.set(doc(db,"projects",nid()),{...d,progress:"pending",createdBy:me.uid,createdByName:me.name,createdAt:serverTimestamp()});if(++n%400===0){await b.commit();b=writeBatch(db);toast(n+" uploaded…")}}
+  await b.commit();log("Imported CSV",n+" rows");toast(n+" projects uploaded — refresh dashboard to see them");},
+ savename:async()=>{const name=$("#s_name").value.trim()||DEF.name;try{await setDoc(doc(db,"config","app"),{name},{merge:true});cfg.name=name;applyName();toast("Name saved")}catch(e){toast("Save failed: "+(e.code||e.message))}},
+ sv:async()=>{try{
+   const labels={...cfg.labels};document.querySelectorAll("[data-l]").forEach(i=>{labels[i.dataset.l]=i.value.trim()||DEF.labels[i.dataset.l]});
+   const opts={...cfg.opts};const idea={...cfg.idea};
+   document.querySelectorAll("[data-o]").forEach(t=>{const a=lines(t.value),k=t.dataset.o;if(!a.length)return;if(k==="istatus")idea.status=a;else if(k==="icat")idea.cat=a;else opts[k]=a});
+   const dep={assetType:{...cfg.dep.assetType},assetModel:{...cfg.dep.assetModel}};
+   document.querySelectorAll("[data-dep]").forEach(t=>{const a=lines(t.value);dep[t.dataset.dep][t.dataset.p]=a});
+   const payload={name:cfg.name,labels,opts,idea,dep};
+   await setDoc(doc(db,"config","app"),payload);
+   cfg={...cfg,...payload};render();toast("Settings saved");
+  }catch(e){toast("Save failed: "+(e.code||e.message))}}
+};
+function parseCSV(t){const r=[];let row=[],f="",qt=false;for(let i=0;i<t.length;i++){const c=t[i];if(qt){if(c=='"'&&t[i+1]=='"'){f+='"';i++}else if(c=='"')qt=false;else f+=c}else if(c=='"')qt=true;else if(c==","){row.push(f);f=""}else if(c=="\n"||c=="\r"){if(c=="\r"&&t[i+1]=="\n")i++;row.push(f);r.push(row);row=[];f=""}else f+=c}if(f||row.length){row.push(f);r.push(row)}return r.filter(x=>x.some(y=>y.trim()))}
+
+const V=$("#view");
+V.onclick=e=>{const b=e.target.closest("[data-a]");if(b&&H[b.dataset.a])H[b.dataset.a](b.dataset.i,b)};
+V.onchange=async e=>{const t=e.target;
+ if(t.id==="fs"){filt.s=t.value;render()}
+ else if(t.dataset.c==="is"){await updateDoc(doc(db,"ideas",t.dataset.i),{status:t.value});const d=ideas.find(x=>x.id===t.dataset.i);if(d)d.status=t.value;log("Idea stage",t.value)}
+ else if(t.dataset.c==="ro"){try{await updateDoc(doc(db,"users",t.dataset.i),{role:t.value});const u=users.find(x=>x.id===t.dataset.i);if(u)u.role=t.value;log("Changed role",t.value)}catch(_){toast("Failed")}}};
+V.oninput=e=>{const t=e.target;if(t.id==="fq"||t.id==="iq"){(t.id==="fq"?filt:iq).q=t.value;const p=t.selectionStart;render();const n=$("#"+t.id);n.focus();n.setSelectionRange(p,p)}};
+</script></body></html>
