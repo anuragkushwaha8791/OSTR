@@ -84,16 +84,16 @@ td.wrap{white-space:normal;min-width:180px;max-width:240px}
 <div id="app" class="hide">
  <div id="ov" class="hide" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:19"></div>
  <div class="side" id="side"><div class="logo" id="sn">CRM</div>
- <a data-v="dash">Dashboard</a><a data-v="proj">Projects</a><a data-v="idea">Voting / Backlog</a><a data-v="log">Activity Log</a><a data-v="rep">Reports</a>
- <a data-v="usr" class="adm">Users</a><a data-v="set" class="adm">Settings</a><a id="lo" style="background:#7f1d1d">Logout</a></div>
+ <a data-v="dash">Dashboard</a><a data-v="notif">🔔 Notifications <span id="nbadge" style="background:#ef4444;border-radius:99px;padding:1px 7px;font-size:11px;margin-left:4px"></span></a><a data-v="proj">Projects</a><a data-v="idea">Voting / Backlog</a><a data-v="log">Activity Log</a><a data-v="rep">Reports</a>
+ <a data-v="usr" class="adm">Users</a><a data-v="set" class="adm">Settings</a><a data-v="acc">My Account</a><a id="lo" style="background:#7f1d1d">Logout</a></div>
  <div class="main"><div class="top"><button class="hb" id="hb">☰</button><h1 id="ttl"></h1><div style="text-align:right"><b id="who"></b><br><small id="dt" style="color:var(--mut)"></small></div></div><div id="view"></div></div>
 </div>
 <div id="modal" class="hide"></div>
 
 <script type="module">
 import {initializeApp,deleteApp} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged,createUserWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import {getFirestore,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,query,where,orderBy,limit,startAfter,getCountFromServer,writeBatch,arrayUnion,arrayRemove,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged,createUserWithEmailAndPassword,updatePassword,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import {getFirestore,collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,query,where,orderBy,limit,startAfter,getCountFromServer,writeBatch,arrayUnion,arrayRemove,serverTimestamp,documentId} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const FC={apiKey:"AIzaSyBO9AuqcNS8K3JPzYs2iT7ER9epGr3my2o",authDomain:"mom-crm-f1fe9.firebaseapp.com",projectId:"mom-crm-f1fe9",storageBucket:"mom-crm-f1fe9.firebasestorage.app",messagingSenderId:"534808422715",appId:"1:534808422715:web:d94c671961498542c56f1e"};
 const app=initializeApp(FC),auth=getAuth(app),db=getFirestore(app);
@@ -110,7 +110,7 @@ const DEF={name:"OTSR CRM",labels:{name:"Project Name",business:"Type Of Busines
  dep:{assetType:Object.fromEntries(BIZ.map(b=>[b,AT])),assetModel:{"Battery":AM_BATTERY,"Charger":AM_CHARGER,"BSS (V1/V2)":AM_BSS,"Other":["Other"]}},
  idea:{status:["Idea Generation","Feasibility Analysis","Prototype Development","Testing","Commercialization","Declined"],cat:["Hardware","Firmware","Software","Documentation","Other"]}};
 let me=null,cfg=DEF,first=[],more=[],cursor=null,hasMore=false,ideas=[],users=[],logs=[],counts={},view="dash",filt={q:"",s:""},iq={q:"",s:"",c:"",sort:"top"};
-let actShow=5,logShow=5,lastLoad=0,refT=null;
+let actShow=5,logShow=5,notifShow=10,lastLoad=0,refT=null;
 const $=s=>document.querySelector(s),isAdmin=()=>me?.role==="admin";
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const toast=m=>{const t=document.createElement("div");t.id="toast";t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2800)};
@@ -173,7 +173,7 @@ onAuthStateChanged(auth,async u=>{
  refT=setInterval(loadAll,REFRESH_MS);
 });
 document.querySelectorAll(".side a[data-v]").forEach(a=>a.onclick=()=>{nav(a.dataset.v);$("#side").classList.remove("open");$("#ov").classList.add("hide")});
-function nav(v){if((v==="usr"||v==="set")&&!isAdmin())return;view=v;actShow=5;logShow=5;document.querySelectorAll(".side a[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===v));render()}
+function nav(v){if((v==="usr"||v==="set")&&!isAdmin())return;view=v;actShow=5;logShow=5;notifShow=10;document.querySelectorAll(".side a[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===v));render()}
 
 // ---- one-time load (low read cost, cache 5h, manual refresh)
 async function loadAll(showToast){
@@ -190,12 +190,21 @@ async function loadAll(showToast){
   const ls=await getDocs(lq);let lmap=new Map(ls.docs.map(d=>[d.id,{id:d.id,...d.data()}]));
   if(tq){const ts=await getDocs(tq);ts.docs.forEach(d=>lmap.set(d.id,{id:d.id,...d.data()}))}
   logs=[...lmap.values()].sort((a,b)=>(b.ts?.seconds||0)-(a.ts?.seconds||0));
-  if(isAdmin()){const us=await getDocs(collection(db,"users"));users=us.docs.map(d=>({id:d.id,...d.data()}))}
+  if(isAdmin()){const us=await getDocs(collection(db,"users"));users=us.docs.map(d=>({id:d.id,...d.data()}));pruneLogs()}
   await loadCounts();
   lastLoad=Date.now();render();
   if(showToast)toast("Data refreshed");
  }catch(e){toast("Load error: "+e.code)}
 }
+async function pruneLogs(){if(!isAdmin())return;try{
+  const cnt=(await getCountFromServer(collection(db,"logs"))).data().count;
+  if(cnt<=100)return;
+  const cutoff=await getDocs(query(collection(db,"logs"),orderBy(documentId()),limit(100)));
+  const lastKeep=cutoff.docs[cutoff.docs.length-1];
+  const old=await getDocs(query(collection(db,"logs"),orderBy(documentId()),startAfter(lastKeep.id),limit(500)));
+  if(!old.docs.length)return;
+  const b=writeBatch(db);old.docs.forEach(d=>b.delete(d.ref));await b.commit();
+ }catch(e){}}
 async function loadCounts(){if(!me)return;const base=isAdmin()?[]:[where("createdBy","==",me.uid)];
  const n=async c=>(await getCountFromServer(query(collection(db,"projects"),...base,...c))).data().count,c={};
  try{c.total=await n([]);for(const s of cfg.opts.status)c[s]=await n([where("status","==",s)]);for(const [pk] of PROG)c["pg:"+pk]=await n([where("progress","==",pk)]);counts=c;render()}catch(e){}}
@@ -241,7 +250,7 @@ const repView=()=>`<div class="sec"><h2>Reports</h2><p style="color:var(--mut);m
  ${isAdmin()?`<hr style="border-color:var(--line);margin:14px 0"><p style="color:var(--mut);margin-bottom:8px">Admin only: upload CSV (header = column names) for bulk insert.</p><div class="row"><input type="file" id="im" accept=".csv" style="max-width:260px"><button data-a="imp">Upload & Save</button></div>`:""}</div>`;
 
 const usrView=()=>`<div class="sec"><h2>Create New User</h2><div class="g"><div><label>Full Name</label><input id="un"></div><div><label>Email</label><input id="ue" type="email"></div><div><label>Password (min 6)</label><input id="up" type="password"></div><div><label>Role</label><select id="ur"><option>user</option><option>admin</option></select></div></div><button data-a="cu">Create User</button></div>
- <div class="sec"><h2>Users</h2><div class="tw"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Access</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.id===me.uid?esc(u.role):`<select data-c="ro" data-i="${u.id}" style="margin:0"><option ${u.role==="user"?"selected":""}>user</option><option ${u.role==="admin"?"selected":""}>admin</option></select>`}</td><td>${u.id===me.uid?"—":`<button class="${u.disabled?"grn":"red"}" data-a="dx" data-i="${u.id}">${u.disabled?"Enable":"Disable"}</button>`}</td></tr>`).join("")}</tbody></table></div></div>`;
+ <div class="sec"><h2>Users</h2><div class="tw"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Access</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${u.id===me.uid?esc(u.role):`<select data-c="ro" data-i="${u.id}" style="margin:0"><option ${u.role==="user"?"selected":""}>user</option><option ${u.role==="admin"?"selected":""}>admin</option></select>`}</td><td>${u.id===me.uid?"—":`<button class="${u.disabled?"grn":"red"}" data-a="dx" data-i="${u.id}">${u.disabled?"Enable":"Disable"}</button>`}</td><td><button class="gry" data-a="euser" data-i="${u.id}" title="Edit name">✏️</button> <button class="gry" data-a="rpw" data-i="${u.id}" title="Send password reset email">🔑 Reset</button></td></tr>`).join("")}</tbody></table></div><p style="color:var(--mut);font-size:12px;margin-top:8px">🔑 Reset sends a password-reset link to that user's email — this is the secure way to set a new password for someone else.</p></div>`;
 
 function setView(){const ta=(attrs,v)=>`<textarea ${attrs}>${esc((v||[]).join("\n"))}</textarea>`;
  const ats=[...new Set(Object.values(cfg.dep.assetType).flat())];
@@ -257,7 +266,23 @@ function setView(){const ta=(attrs,v)=>`<textarea ${attrs}>${esc((v||[]).join("\
  <div class="sec"><h2>${esc(cfg.labels.assetModel)} options — per ${esc(cfg.labels.assetType)}</h2><div class="g">${ats.map(a=>`<div><label>${esc(a)} →</label>${ta(`data-dep="assetModel" data-p="${esc(a)}"`,cfg.dep.assetModel[a])}</div>`).join("")}</div><small style="color:var(--mut)">New ${esc(cfg.labels.assetType)} names appear here after saving the section above.</small></div>
  <button data-a="sv">Save All Settings</button>`}
 
-function render(){if(!me)return;const v=$("#view");v.innerHTML=({dash,proj:projView,idea:ideaView,log:()=>{const l=logs.slice(0,logShow);return `<div class="sec"><h2>${isAdmin()?"All Activity":"My Activity"}</h2>${actTable(l)}${logs.length>logShow?`<div class="row" style="margin-top:10px"><button class="gry" data-a="log5">Show 5 more</button><button class="gry" data-a="log10">Show 10 more</button></div>`:""}</div>`},rep:repView,usr:usrView,set:setView})[view]()}
+const PRI_RANK={Critical:4,High:3,Medium:2,Low:1};
+function pendingList(){return all().filter(p=>p.progress!=="done").sort((a,b)=>(PRI_RANK[b.priority]||0)-(PRI_RANK[a.priority]||0))}
+function notifView(){const full=pendingList(),l=full.slice(0,notifShow);
+ return `<div class="sec"><h2>Open Tasks — highest priority first</h2><p style="color:var(--mut);font-size:13px;margin-bottom:10px">Shows all loaded projects not yet marked Completed. Critical/High priority always appear on top.</p>
+ <div class="tw"><table><thead><tr><th>Priority</th><th>Project</th><th>Owner</th><th>Status</th><th>Progress</th><th>End Date</th></tr></thead><tbody>
+ ${l.map(p=>`<tr class="${p.priority==="Critical"?"crit":""}"><td><b style="color:${p.priority==="Critical"?"#f87171":p.priority==="High"?"#fbbf24":"#94a3b8"}">${esc(p.priority||"—")}</b></td><td>${esc(p.name)}</td><td>${esc(p.owner)}</td><td>${esc(p.status)}</td><td>${progBadge(p)}</td><td>${esc(p.end)||"—"}</td></tr>`).join("")||"<tr><td colspan=6>Nothing pending 🎉</td></tr>"}</tbody></table></div>
+ ${full.length>notifShow?`<div class="row" style="margin-top:10px"><button class="gry" data-a="notif10">Show 10 more</button></div>`:""}</div>`}
+function accView(){
+ const pwSec=`<div class="sec"><h2>Change Password</h2>
+ <label>New Password (min 6 characters)</label><input id="np" type="password">
+ <label>Confirm New Password</label><input id="np2" type="password">
+ <button data-a="chpw">Change Password</button></div>`;
+ if(!isAdmin())return `<div class="sec"><h2>My Account</h2><p style="color:var(--mut)">${esc(me.name)} · ${esc(me.email)} · ${esc(me.role)}</p></div>${pwSec}`;
+ return `<div class="sec"><h2>My Account</h2><label>Full Name</label><input id="myname" value="${esc(me.name)}"><label>Email</label><input value="${esc(me.email)}" disabled style="opacity:.6"><button data-a="savemyname">Save Name</button></div>${pwSec}`;
+}
+function render(){if(!me)return;const v=$("#view");const nb=$("#nbadge");if(nb){const n=pendingList().length;nb.textContent=n||"";nb.style.display=n?"inline-block":"none"}
+ v.innerHTML=({dash,notif:notifView,proj:projView,idea:ideaView,log:()=>{const l=logs.slice(0,logShow);return `<div class="sec"><h2>${isAdmin()?"All Activity":"My Activity"}</h2>${actTable(l)}${logs.length>logShow?`<div class="row" style="margin-top:10px"><button class="gry" data-a="log5">Show 5 more</button><button class="gry" data-a="log10">Show 10 more</button></div>`:""}</div>`},rep:repView,usr:usrView,set:setView,acc:accView})[view]()}
 
 // ---- form popup (cascading dropdowns)
 const optsFor=(k,v)=>k==="assetType"?(cfg.dep.assetType[v.business]||[]):k==="assetModel"?(cfg.dep.assetModel[v.assetType]||[]):(cfg.opts[k]||[]);
@@ -280,9 +305,25 @@ async function upd(p,d){await updateDoc(doc(db,"projects",p.id),{...d,updatedAt:
 
 // ---- actions
 const H={
+ chpw:async()=>{const np=$("#np").value,np2=$("#np2").value;
+  if(np.length<6)return toast("New password must be at least 6 characters");
+  if(np!==np2)return toast("New passwords don't match");
+  try{await updatePassword(auth.currentUser,np);$("#np").value="";$("#np2").value="";log("Changed own password");toast("Password changed successfully")}
+  catch(e){toast(e.code==="auth/requires-recent-login"?"For security, please logout and login again, then retry":"Failed: "+e.code)}},
+ savemyname:async()=>{const n=$("#myname").value.trim();if(!n)return toast("Name required");try{await updateDoc(doc(db,"users",me.uid),{name:n});me.name=n;$("#who").textContent=`${me.name} (${me.role})`;log("Updated own profile name",n);toast("Saved")}catch(e){toast("Failed: "+e.code)}},
+ euser:i=>{if(!isAdmin())return;const u=users.find(x=>x.id===i);const m=$("#modal");
+  m.innerHTML=`<div class="box"><h2 style="margin-bottom:12px">Edit User — ${esc(u.email)}</h2><label>Full Name</label><input id="eun" value="${esc(u.name)}"><div class="row"><button id="eus">Save</button><button class="gry" id="euc">Cancel</button></div></div>`;m.classList.remove("hide");
+  $("#euc").onclick=()=>m.classList.add("hide");
+  $("#eus").onclick=async()=>{const n=$("#eun").value.trim();if(!n)return toast("Name required");try{await updateDoc(doc(db,"users",i),{name:n});u.name=n;render();log("Edited user name",u.email+" → "+n);m.classList.add("hide");toast("Saved")}catch(e){toast("Failed: "+e.code)}}},
+ rpw:async i=>{const u=users.find(x=>x.id===i);if(!confirm("Send a password-reset email to "+u.email+"?"))return;
+  const s=initializeApp(FC,"pwreset"+Date.now()),a=getAuth(s);
+  try{await sendPasswordResetEmail(a,u.email);log("Sent password reset email",u.email);toast("Reset link sent to "+u.email)}catch(e){toast("Failed: "+e.code)}
+  await deleteApp(s)},
+
  ref:()=>loadAll(true),
  loadmore:loadMore,
  more5:()=>{actShow+=5;render()},more10:()=>{actShow+=10;render()},
+ notif10:()=>{notifShow+=10;render()},
  log5:()=>{logShow+=5;render()},log10:()=>{logShow+=10;render()},
  new:()=>formModal(null,"New Project",async d=>{const id=nid();const obj={...d,progress:"pending",createdBy:me.uid,createdByName:me.name,createdAt:serverTimestamp()};await setDoc(doc(db,"projects",id),obj);first.unshift({id,...obj,createdAt:new Date()});log("Created project",d.name)}),
  ed:i=>{const p=find(i);formModal(p,"Edit Project",async d=>{await upd(p,d);log("Edited project",d.name,p.createdBy)})},
